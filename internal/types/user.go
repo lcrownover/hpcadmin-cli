@@ -1,20 +1,27 @@
 package types
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
-type UserCreate struct {
+type UserRequest struct {
 	Username  string `json:"username"`
 	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
 }
 
-type User struct {
+func (u *UserRequest) ToBytes() ([]byte, error) {
+    return json.Marshal(u)
+}
+
+type UserResponse struct {
 	Id        int       `json:"id"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
+	FirstName string    `json:"firstname"`
+	LastName  string    `json:"lastname"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
