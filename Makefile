@@ -4,7 +4,13 @@ ifndef $(GOPATH)
 endif
 
 build:
-	@go build -o bin/hpcadmin cmd/hpcadmin-cli/main.go
+	go build -o bin/hpcadmin cmd/hpcadmin-cli/main.go
+
+tidy:
+	go mod tidy	
 
 run: build
-	@./bin/hpcadmin
+	./bin/hpcadmin
+
+test:
+	go test -v ./...

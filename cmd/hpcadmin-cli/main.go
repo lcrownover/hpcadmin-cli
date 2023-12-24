@@ -1,11 +1,16 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
-*/
 package main
 
-import "github.com/lcrownover/hpcadmin-cli/internal/cmd"
+import (
+	"fmt"
+	"os"
+
+	"github.com/lcrownover/hpcadmin-cli/internal/cli"
+)
 
 func main() {
-	cmd.Execute()
+	err := cli.Execute()
+	if err != nil {
+		fmt.Printf("Error executing cli: %v\n", err)
+		os.Exit(1)
+	}
 }
