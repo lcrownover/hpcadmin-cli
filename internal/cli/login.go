@@ -1,17 +1,23 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/lcrownover/hpcadmin-cli/internal/auth"
+	"github.com/lcrownover/hpcadmin-cli/internal/config"
 	"github.com/lcrownover/hpcadmin-cli/internal/util"
 	"github.com/spf13/cobra"
 )
 
-// TODO(lcrown): move these to a config file
-const AZURE_TENANT_ID = "8f0b198f-f447-4cfe-ba03-526b46c661f8"
-const AZURE_CLIENT_ID = "1951f213-c370-4a77-b7cd-7a4c303df45a"
+type AuthInfo struct {
+	TenantID string `json:"tenant_id"`
+	ClientID string `json:"client_id"`
+}
 
 func init() {
 	rootCmd.AddCommand(LoginCmd)
@@ -21,10 +27,22 @@ var LoginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Login to HPCAdmin",
 	Run: func(cmd *cobra.Command, args []string) {
-		var accessToken string
-		azureAuthOptions := auth.NewOauthHandlerOptions(auth.Azure, AZURE_TENANT_ID, AZURE_CLIENT_ID)
+		slog.Debug("running login command", "method", "LoginCmd.Run")
+		cfg, err := config.GetCLIConfig()
+		if err != nil {
+			util.PrintAndExit(fmt.Sprintf("Error getting CLI config: %v\n", err), 1)
+		}
+		
+		authInfo, err := GetAuthInfo(cfg)
+		if err != nil {
+			util.ErrorPrint(fmt.Sprintf("Error getting auth info: %v\n", err))
+			os.Exit(1)
+		}
 
-		ah := auth.NewAuthHandler(configDir, azureAuthOptions)
+		var accessToken string
+		azureAuthOptions := auth.NewOauthHandlerOptions(auth.Azure, authInfo.TenantID, authInfo.ClientID)
+
+		ah := auth.NewAuthHandler(cfg.ConfigDir, azureAuthOptions)
 		accessToken, ok := ah.LoadAccessToken()
 		if !ok {
 			accessToken, err = ah.Authenticate()
@@ -38,4 +56,31 @@ var LoginCmd = &cobra.Command{
 		// token can be accessed
 		fmt.Printf("token: %v\n", accessToken)
 	},
+}
+
+func GetAuthInfo(config *config.CLIConfig) (*AuthInfo, error) {
+	var authInfo AuthInfo
+	slog.Debug("getting auth info from hpcadmin server", "method", "GetAuthInfo")
+	resp, err := http.Get(fmt.Sprintf("%s/oauth/info", config.BaseURL))
+	if err != nil {
+		slog.Debug("failed to get auth info from hpcadmin server", "method", "GetAuthInfo", "error", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	slog.Debug("successfully retrieved auth info from hpcadmin server", "method", "GetAuthInfo")
+	slog.Debug("reading response body", "method", "GetAuthInfo")
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		slog.Debug("error reading response body", "method", "GetAuthInfo", "error", err)
+		return nil, err
+	}
+	slog.Debug("successfully read response body", "method", "GetAuthInfo")
+	slog.Debug("unmarshalling response body", "method", "GetAuthInfo")
+	err = json.Unmarshal(body, &authInfo)
+	if err != nil {
+		slog.Debug("error unmarshalling response body", "method", "GetAuthInfo", "error", err)
+		return nil, err
+	}
+	slog.Debug("successfully retrieved auth info from hpcadmin server", "info", fmt.Sprintf("%+v", &authInfo), "method", "GetAuthInfo")
+	return &authInfo, nil
 }

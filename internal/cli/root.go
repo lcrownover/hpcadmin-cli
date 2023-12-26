@@ -10,21 +10,19 @@ import (
 )
 
 var (
-	err       error
-	debug     bool
-	configDir string
-	rootCmd   = &cobra.Command{
+	debug bool
+
+	rootCmd = &cobra.Command{
 		Use:   "hpcadmin",
 		Short: "HPCAdmin CLI",
 		Long:  `HPCAdmin is a CMDB for hosting membership information for the Talapas HPC at University of Oregon`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			var err error
 			util.ConfigureLogging(debug)
 			slog.Debug("Starting hpcadmin-cli", "method", "Execute")
 
-			configDir, err = config.EnsureCLIConfigDir()
+			_, err := config.GetCLIConfig()
 			if err != nil {
-				util.PrintAndExit(fmt.Sprintf("Error reading configuration directory: %v\n", err), 1)
+				util.PrintAndExit(fmt.Sprintf("Error getting CLI config: %v\n", err), 1)
 			}
 		},
 	}

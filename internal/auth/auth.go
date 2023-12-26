@@ -62,15 +62,11 @@ func getRandomPort() int {
 }
 
 func NewAuthHandler(configDirectory string, opts OauthHandlerOptions) *AuthHandler {
+	slog.Debug("creating new auth handler", "method", "NewAuthHandler")
+	slog.Debug("configDirectory", "value", configDirectory, "method", "NewAuthHandler")
 	ctx := context.Background()
 	authPort := getRandomPort()
 	slog.Debug("authPort", "value", authPort, "method", "NewAuthHandler")
-
-	// ensur the config directory exists
-	err := ensureConfigDir(configDirectory)
-	if err != nil {
-		util.PrintAndExit(fmt.Sprintf("Error with configuration directory: %v\n", err), 1)
-	}
 
 	// oauth2 config includes things like the client id,
 	// the auth endpoint, redirectURL, and scopes
@@ -160,12 +156,12 @@ func (h *AuthHandler) Authenticate() (string, error) {
 
 	go func() {
 		h.HttpMux.HandleFunc("/oauth/callback", h.CallbackHandler)
-		slog.Debug("Starting server", "method", "Authenticate")
+		slog.Debug("starting server", "method", "Authenticate")
 		err := h.HttpServer.ListenAndServe()
 		if err != nil {
 			if err != http.ErrServerClosed {
 				// ErrServerClosed is returned by ListenAndServe and is fine
-				slog.Error("Server error", "method", "Authenticate")
+				slog.Error("server error", "method", "Authenticate")
 			}
 		}
 	}()
@@ -173,23 +169,17 @@ func (h *AuthHandler) Authenticate() (string, error) {
 	for n := 0; n < 1; {
 		select {
 		case <-h.AuthDoneCh:
-			slog.Debug("Authentication successful, shutting down server", "method", "Authenticate")
+			slog.Debug("authentication successful, shutting down server", "method", "Authenticate")
 			h.HttpServer.Shutdown(h.Ctx)
-			slog.Debug("Server shut down", "method", "Authenticate")
+			slog.Debug("server shut down", "method", "Authenticate")
 			n++
 		case <-time.After(1 * time.Minute):
-			slog.Debug("Authentication failed, shutting down server", "method", "Authenticate")
+			slog.Debug("authentication failed, shutting down server", "method", "Authenticate")
 			h.HttpServer.Shutdown(h.Ctx)
-			slog.Debug("Server shut down", "method", "Authenticate")
+			slog.Debug("server shut down", "method", "Authenticate")
 			return "", fmt.Errorf("authentication timed out")
 		}
 	}
 
 	return h.AccessToken, nil
-}
-
-func ensureConfigDir(dir string) error {
-	// ensure the config directory exists
-	slog.Debug("ensuring config directory exists", "method", "ensureConfigDir")
-	return os.MkdirAll(dir, 0755)
 }

@@ -4,10 +4,11 @@ go 1.21.5
 
 require (
 	github.com/fatih/color v1.16.0
-	github.com/lcrownover/hpcadmin-lib v0.0.0-20231224015839-8fc3f0833e70
+	github.com/lcrownover/hpcadmin-lib v0.0.0-20231224042810-baa3096648cc
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/spf13/cobra v1.8.0
 	golang.org/x/oauth2 v0.15.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -27,7 +28,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
-	google.golang.org/appengine v1.6.8 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
